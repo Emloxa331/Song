@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emloxa Mix Studio</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --text-color: #e0e0e0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 { color: var(--primary-color); margin-bottom: 10px; text-align: center; }
+        .controls {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button, label.upload-btn {
+            flex: 1;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        input[type="file"] { display: none; }
+        #track-list { width: 100%; max-width: 400px; }
+        .track {
+            background-color: var(--surface-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .track h4 { margin: 0 0 10px 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .slider-group { margin-bottom: 10px; }
+        .slider-group label { font-size: 12px; display: block; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; accent-color: var(--primary-color); }
+        .effect-btn {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .effect-btn.active { background-color: var(--primary-color); color: #000; }
+    </style>
+</head>
+<body>
+
+    <h2>Emloxa Mix Studio</h2>
+    
+    <div class="controls">
+        <label class="upload-btn">
+            Şarkı Ekle
+            <input type="file" id="audio-upload" accept="audio/*" multiple>
+        </label>
+        <button id="play-all-btn">Tümünü Oynat</button>
+    </div>
+
+    <div id="track-list"></div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const trackList = document.getElementById('track-list');
+        const playAllBtn = document.getElementById('play-all-btn');
+        let tracks = [];
+        let isPlaying = false;
+
+        document.getElementById('audio-upload').addEventListener('change', function(e) {
+            const files = e.target.files;
+            for (let file of files) {
+                addTrack(file);
+            }
+        });
+
+        function addTrack(file) {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const arrayBuffer = e.target.result;
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Audio Nodes
+                const gainNode = audioContext.createGain();
+                
+                // Radio Effect Nodes (Bandpass filter simulation)
+                const highpass = audioContext.createBiquadFilter();
+                highpass.type = "highpass";
+                highpass.frequency.value = 1000; 
+                
+                const lowpass = audioContext.createBiquadFilter();
+                lowpass.type = "lowpass";
+                lowpass.frequency.value = 3000;
+
+                const trackObj = {
+                    buffer: audioBuffer,
+                    gainNode: gainNode,
+                    highpass: highpass,
+                    lowpass: lowpass,
+                    source: null,
+                    radioActive: false,
+                    offset: 0 // For future slicing/timing logic
+                };
+                tracks.push(trackObj);
+                createTrackUI(file.name, trackObj);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function createTrackUI(name, trackObj) {
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'track';
+            
+            trackDiv.innerHTML = `
+                <h4>${name}</h4>
+                <div class="slider-group">
+                    <label>Ses Seviyesi</label>
+                    <input type="range" min="0" max="2" step="0.1" value="1" class="vol-slider">
+                </div>
+                <button class="effect-btn">Radyo Efekti: KAPALI</button>
+            `;
+
+            // Volume Control
+            trackDiv.querySelector('.vol-slider').addEventListener('input', (e) => {
+                trackObj.gainNode.gain.value = e.target.value;
+            });
+
+            // Radio Effect Toggle
+            const effectBtn = trackDiv.querySelector('.effect-btn');
+            effectBtn.addEventListener('click', () => {
+                trackObj.radioActive = !trackObj.radioActive;
+                if (trackObj.radioActive) {
+                    effectBtn.textContent = "Radyo Efekti: AÇIK";
+                    effectBtn.classList.add('active');
+                } else {
+                    effectBtn.textContent = "Radyo Efekti: KAPALI";
+                    effectBtn.classList.remove('active');
+                }
+                // If playing, we would need to dynamically reroute nodes here (simplified for MVP)
+            });
+
+            trackList.appendChild(trackDiv);
+        }
+
+        playAllBtn.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            if (isPlaying) {
+                tracks.forEach(t => { if(t.source) t.source.stop(); });
+                playAllBtn.textContent = "Tümünü Oynat";
+                isPlaying = false;
+            } else {
+                tracks.forEach(t => {
+                    t.source = audioContext.createBufferSource();
+                    t.source.buffer = t.buffer;
+                    
+                    // Routing logic
+                    if (t.radioActive) {
+                        t.source.connect(t.highpass);
+                        t.highpass.connect(t.lowpass);
+                        t.lowpass.connect(t.gainNode);
+                    } else {
+                        t.source.connect(t.gainNode);
+                    }
+                    
+                    t.gainNode.connect(audioContext.destination);
+                    t.source.start(0);
+                });
+                playAllBtn.textContent = "Durdur";
+                isPlaying = true;
+            }
+        });
+    </script>
+</body>
+  </html>
