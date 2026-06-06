@@ -3,259 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emloxa Mix Studio Pro</title>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+    <title>Emloxa Mix Studio - Timeline Edition</title>
     <style>
         :root {
             --bg-dark: #121212;
             --bg-panel: #1e1e24;
             --capcut-cyan: #00e5ff;
-            --text-light: #f0f0f0;
             --btn-purple: #a688fa;
+            --timeline-bg: #2a2a35;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-dark);
-            color: var(--text-light);
+            color: white;
             margin: 0;
-            padding: 15px;
+            padding: 10px;
             overflow-x: hidden;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        h2 { text-align: center; color: var(--btn-purple); font-size: 20px; }
 
-        .header h1 {
-            color: var(--btn-purple);
-            font-size: 24px;
-            margin: 0 0 10px 0;
-        }
-
-        .main-controls {
+        .toolbar {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            justify-content: center;
         }
 
         button, .upload-btn {
             background-color: var(--btn-purple);
-            color: #121212;
+            color: #000;
             border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            text-transform: uppercase;
-            text-align: center;
-            flex: 1;
-            max-width: 150px;
-        }
-
-        button:active, .upload-btn:active {
-            opacity: 0.8;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        #track-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .track-box {
-            background-color: var(--bg-panel);
-            border-radius: 8px;
             padding: 10px;
-            border-left: 4px solid var(--capcut-cyan);
-        }
-
-        .track-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .track-name {
-            font-size: 13px;
+            border-radius: 5px;
             font-weight: bold;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #play-master { background-color: var(--capcut-cyan); }
+        input[type="file"] { display: none; }
+
+        /* TIMELINE (ZAMAN ÇİZELGESİ) ALANI */
+        .workspace-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            background-color: var(--timeline-bg);
+            border-radius: 8px;
+            position: relative;
+            padding-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        .workspace {
+            position: relative;
+            width: 2000px; /* Geniş bir çalışma alanı (Saniye başı 20px) */
+            min-height: 200px;
+            padding-top: 30px; /* Saniye cetveli için boşluk */
+        }
+
+        /* Oynatma Çizgisi (Playhead) */
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0px;
+            width: 2px;
+            background-color: white;
+            z-index: 100;
+            box-shadow: 0 0 5px rgba(255,255,255,0.8);
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        /* Saniye Cetveli */
+        .time-ruler {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 25px;
+            border-bottom: 1px solid #555;
+            display: flex;
+            color: #888;
+            font-size: 10px;
+            pointer-events: none;
+        }
+
+        /* Şarkı Katmanları (Tracks) */
+        .track-lane {
+            position: relative;
+            height: 80px;
+            margin-bottom: 10px;
+            background-color: rgba(255,255,255,0.02);
+            border-bottom: 1px solid #333;
+        }
+
+        .audio-clip {
+            position: absolute;
+            top: 5px;
+            height: 70px;
+            background: linear-gradient(90deg, #005b66, var(--capcut-cyan));
+            border-radius: 5px;
+            display: flex;
+            align-items: flex-end;
+            padding: 5px;
+            box-sizing: border-box;
+            border: 1px solid #fff;
+            /* Sahte ses dalgası deseni */
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.3) 2px,
+                rgba(0,0,0,0.3) 4px
+            );
+        }
+
+        .clip-name {
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px black;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 70%;
+            max-width: 100%;
         }
 
-        .delete-btn {
-            background-color: #ff4d4d;
-            color: white;
-            padding: 5px 10px;
-            font-size: 11px;
-            max-width: max-content;
-            border-radius: 4px;
-        }
-
-        /* Ses Dalgası Alanı */
-        .waveform {
-            width: 100%;
-            height: 80px;
-            background-color: #000;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
+        /* Alt Kontroller */
         .track-controls {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            margin-top: 20px;
         }
-
-        .slider-row {
+        
+        .control-row {
+            background-color: var(--bg-panel);
+            padding: 10px;
+            border-radius: 5px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             font-size: 12px;
         }
 
-        .slider-row input[type="range"] {
-            width: 70%;
-            accent-color: var(--btn-purple);
-        }
-
-        #play-all-btn {
-            background-color: var(--capcut-cyan);
+        .control-row input[type="number"] {
+            width: 50px;
+            background: #333;
+            color: white;
+            border: 1px solid var(--btn-purple);
+            border-radius: 3px;
+            padding: 3px;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Emloxa Mix Studio Pro</h1>
-    </div>
+    <h2>Emloxa Mix Studio Pro</h2>
 
-    <div class="main-controls">
+    <div class="toolbar">
         <label class="upload-btn">
-            + Şarkı Ekle
+            + SES EKLE
             <input type="file" id="file-upload" accept="audio/*">
         </label>
-        <button id="play-all-btn">Tümünü Oynat</button>
+        <button id="play-master">BAŞLAT (TÜMÜ)</button>
     </div>
 
-    <div id="track-container">
-        </div>
+    <div class="workspace-wrapper">
+        <div class="workspace" id="workspace">
+            <div class="time-ruler" id="time-ruler"></div>
+            <div class="playhead" id="playhead"></div>
+            </div>
+    </div>
+
+    <div class="track-controls" id="controls-container"></div>
 
     <script>
-        const trackContainer = document.getElementById('track-container');
-        const playAllBtn = document.getElementById('play-all-btn');
-        let wavesurfers = []; // Tüm ses dalgası objelerini tuttuğumuz dizi
-        let isPlayingAll = false;
+        const pixelsPerSecond = 20; // Zaman çizelgesi ölçeği (1 saniye = 20 piksel)
+        const workspace = document.getElementById('workspace');
+        const ruler = document.getElementById('time-ruler');
+        const playhead = document.getElementById('playhead');
+        const controlsContainer = document.getElementById('controls-container');
+        const playMasterBtn = document.getElementById('play-master');
 
-        // Dosya Yükleme İşlemi
+        let tracks = [];
+        let isPlaying = false;
+        let globalTime = 0; // Saniye cinsinden
+        let animationFrame;
+        let startTime = 0;
+
+        // Cetveli Çiz (0'dan 100 saniyeye kadar basit bir cetvel)
+        for(let i=0; i<=100; i+=5) {
+            let mark = document.createElement('div');
+            mark.style.position = 'absolute';
+            mark.style.left = (i * pixelsPerSecond) + 'px';
+            mark.innerText = i + 's';
+            ruler.appendChild(mark);
+        }
+
+        // Dosya Yükleme
         document.getElementById('file-upload').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (file) {
-                const fileUrl = URL.createObjectURL(file);
-                createTrack(file.name, fileUrl);
-            }
-            this.value = ''; // Aynı dosyayı tekrar seçebilmek için sıfırla
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            const audioObj = new Audio(url);
+            
+            // Sesin uzunluğunu öğrenmek için yüklenmesini bekliyoruz
+            audioObj.onloadedmetadata = () => {
+                addTrackToTimeline(file.name, audioObj, audioObj.duration);
+            };
         });
 
-        function createTrack(fileName, fileUrl) {
-            const trackId = 'track_' + Math.random().toString(36).substr(2, 9);
+        function addTrackToTimeline(name, audioObj, duration) {
+            const trackId = Date.now();
             
-            // HTML Arayüzünü Oluştur
-            const trackDiv = document.createElement('div');
-            trackDiv.className = 'track-box';
-            trackDiv.id = trackId;
-            
-            trackDiv.innerHTML = `
-                <div class="track-header">
-                    <span class="track-name">${fileName}</span>
-                    <button class="delete-btn" onclick="removeTrack('${trackId}')">X SİL</button>
+            const trackData = {
+                id: trackId,
+                audio: audioObj,
+                duration: duration,
+                startOffset: 0 // Şarkının kaçıncı saniyede başlayacağı
+            };
+            tracks.push(trackData);
+
+            // 1. Timeline Üzerinde Görsel Katman (Lane & Clip) Oluştur
+            const laneDiv = document.createElement('div');
+            laneDiv.className = 'track-lane';
+            laneDiv.id = 'lane-' + trackId;
+
+            const clipDiv = document.createElement('div');
+            clipDiv.className = 'audio-clip';
+            clipDiv.id = 'clip-' + trackId;
+            clipDiv.style.width = (duration * pixelsPerSecond) + 'px';
+            clipDiv.style.left = '0px'; // Başlangıçta 0
+            clipDiv.innerHTML = `<span class="clip-name">${name}</span>`;
+
+            laneDiv.appendChild(clipDiv);
+            workspace.appendChild(laneDiv);
+
+            // 2. Alt Kısımda Kontrol Paneli Oluştur
+            const controlDiv = document.createElement('div');
+            controlDiv.className = 'control-row';
+            controlDiv.innerHTML = `
+                <div>
+                    <strong>${name.substring(0, 15)}...</strong>
                 </div>
-                <div class="waveform" id="waveform_${trackId}"></div>
-                <div class="track-controls">
-                    <div class="slider-row">
-                        <label>Ses (Vol)</label>
-                        <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="1">
-                    </div>
-                    <div class="slider-row">
-                        <label>Pitch/Hız</label>
-                        <input type="range" class="pitch-slider" min="0.5" max="1.5" step="0.05" value="1">
-                    </div>
+                <div>
+                    Başlama Saniyesi: 
+                    <input type="number" min="0" value="0" step="1" id="offset-${trackId}">
                 </div>
             `;
-            
-            trackContainer.appendChild(trackDiv);
+            controlsContainer.appendChild(controlDiv);
 
-            // Wavesurfer.js ile Ses Dalgasını (Waveform) Çizdir
-            const ws = WaveSurfer.create({
-                container: `#waveform_${trackId}`,
-                waveColor: '#005b66',
-                progressColor: '#00e5ff', // CapCut Turkuazı
-                cursorColor: '#ffffff',   // Dikey Oynatma Çizgisi
-                cursorWidth: 2,
-                barWidth: 2,
-                barGap: 1,
-                barRadius: 2,
-                height: 80,
-                url: fileUrl
-            });
-
-            // Wavesurfer objesine özel bir ID atayalım ki sonradan silebilelim
-            ws.emloxaId = trackId;
-            wavesurfers.push(ws);
-
-            // Ses Ayarı (Volume)
-            const volSlider = trackDiv.querySelector('.vol-slider');
-            volSlider.addEventListener('input', (e) => {
-                ws.setVolume(Number(e.target.value));
-            });
-
-            // Pitch / Hız Ayarı (Playback Rate)
-            const pitchSlider = trackDiv.querySelector('.pitch-slider');
-            pitchSlider.addEventListener('input', (e) => {
-                ws.setPlaybackRate(Number(e.target.value));
+            // Başlama Saniyesi Değiştiğinde Bloğu Sağa/Sola Kaydır
+            document.getElementById(`offset-${trackId}`).addEventListener('input', (e) => {
+                const newOffset = parseFloat(e.target.value) || 0;
+                trackData.startOffset = newOffset;
+                clipDiv.style.left = (newOffset * pixelsPerSecond) + 'px'; // Görseli kaydır
             });
         }
 
-        // Şarkı Silme Fonksiyonu
-        window.removeTrack = function(trackId) {
-            // UI'dan kaldır
-            const trackDiv = document.getElementById(trackId);
-            if (trackDiv) trackDiv.remove();
+        // Master Play / Pause Mantığı
+        playMasterBtn.addEventListener('click', () => {
+            if (tracks.length === 0) return alert("Önce şarkı yükleyin!");
 
-            // Wavesurfer dizisinden bul, durdur ve yok et
-            const index = wavesurfers.findIndex(ws => ws.emloxaId === trackId);
-            if (index > -1) {
-                wavesurfers[index].destroy();
-                wavesurfers.splice(index, 1);
-            }
-        };
-
-        // Tümünü Oynat / Durdur Mantığı
-        playAllBtn.addEventListener('click', () => {
-            if (wavesurfers.length === 0) return alert("Önce şarkı ekle!");
-
-            if (isPlayingAll) {
-                wavesurfers.forEach(ws => ws.pause());
-                playAllBtn.textContent = "Tümünü Oynat";
-                playAllBtn.style.backgroundColor = "var(--capcut-cyan)";
+            if (isPlaying) {
+                // Durdur
+                cancelAnimationFrame(animationFrame);
+                tracks.forEach(t => { t.audio.pause(); t.audio.currentTime = 0; });
+                playMasterBtn.textContent = "BAŞLAT (TÜMÜ)";
+                playMasterBtn.style.backgroundColor = "var(--capcut-cyan)";
+                globalTime = 0;
+                playhead.style.left = '0px';
+                isPlaying = false;
             } else {
-                wavesurfers.forEach(ws => ws.play());
-                playAllBtn.textContent = "Tümünü Durdur";
-                playAllBtn.style.backgroundColor = "#ff4d4d"; // Kırmızı yap
+                // Oynat
+                startTime = Date.now();
+                playMasterBtn.textContent = "DURDUR";
+                playMasterBtn.style.backgroundColor = "#ff4d4d";
+                isPlaying = true;
+                updateTimeline();
             }
-            isPlayingAll = !isPlayingAll;
         });
+
+        // Çizgiyi İlerleten ve Şarkıları Zamanı Gelince Başlatan Döngü
+        function updateTimeline() {
+            if (!isPlaying) return;
+
+            // Ne kadar süre geçtiğini hesapla
+            globalTime = (Date.now() - startTime) / 1000; 
+
+            // Playhead (Dikey Çizgi) Konumunu Güncelle
+            playhead.style.left = (globalTime * pixelsPerSecond) + 'px';
+
+            // Hangi şarkıların çalması gerektiğini kontrol et
+            tracks.forEach(track => {
+                // Eğer global zaman, şarkının başlama zamanını (offset) geçtiyse ve şarkı henüz bitmediyse
+                if (globalTime >= track.startOffset && globalTime < (track.startOffset + track.duration)) {
+                    if (track.audio.paused) {
+                        // Şarkıyı doğru saniyeden başlat
+                        track.audio.currentTime = globalTime - track.startOffset;
+                        track.audio.play();
+                    }
+                } else {
+                    // Şarkı bitmişse veya henüz zamanı gelmemişse durdur
+                    if (!track.audio.paused) {
+                        track.audio.pause();
+                    }
+                }
+            });
+
+            // Ekranı otomatik kaydır (Playhead sağa gittikçe ekran da takip etsin)
+            const wrapper = document.querySelector('.workspace-wrapper');
+            if ((globalTime * pixelsPerSecond) > wrapper.scrollLeft + wrapper.clientWidth - 50) {
+                wrapper.scrollLeft = (globalTime * pixelsPerSecond) - wrapper.clientWidth + 100;
+            }
+
+            animationFrame = requestAnimationFrame(updateTimeline);
+        }
     </script>
 </body>
 </html>
