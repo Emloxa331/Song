@@ -1,338 +1,596 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emloxa Mix Studio - Timeline Edition</title>
-    <style>
-        :root {
-            --bg-dark: #121212;
-            --bg-panel: #1e1e24;
-            --capcut-cyan: #00e5ff;
-            --btn-purple: #a688fa;
-            --timeline-bg: #2a2a35;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>EMLOXA AI PRO | Ultimate Character Roleplay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+  /* Genel stil ayarları */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --border: #1f1f1f;
+    --accent: #deff9a;
+    --accent-soft: rgba(222, 255, 154, 0.08);
+    --text-p: #d4d4d4;
+    --text-h: #f0f0f0;
+    --user-bubble: #1a1a1a;
+    --ai-bubble: #0f0f0f;
+    --danger: #ff5f5f;
+    --radius: 16px;
+    --transition: 0.2s ease;
+  }
+  body, html {
+    height: 100vh; width: 100%;
+    background: var(--bg);
+    font-family: 'Urbanist', sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+  }
+  .slide-container {
+    width: 1280px; height: 720px;
+    max-width: 100%; max-height: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+  /* TAB NAVIGATION */
+  .tab-navigation {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    gap: 0;
+  }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 16px 28px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    border-bottom: 3px solid transparent;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-btn i {
+    font-size: 16px;
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    background: rgba(222,255,154,0.03);
+  }
+  .tab-btn:hover {
+    color: #ddd;
+  }
+  .panels {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel {
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--bg);
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+  .panel.active {
+    display: flex;
+    flex-direction: column;
+  }
+  .panel::-webkit-scrollbar {
+    width: 5px;
+  }
+  .panel::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 12px;
+  }
+  .panel::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .chat-header {
+    padding: 16px 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+  }
+  .chat-header img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    object-fit: cover;
+  }
+  .chat-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+  .chat-header span {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .chat-history {
+    flex: 1;
+    padding: 22px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: radial-gradient(circle at 50% 50%, #0b0b0b 0%, #020202 100%);
+    scroll-behavior: smooth;
+    white-space: pre-wrap;
+  }
+  .msg {
+    max-width: 85%;
+    display: flex;
+    gap: 10px;
+    animation: fadeIn 0.35s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  .msg-content {
+    padding: 18px 24px;
+    border-radius: 24px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .msg.user .msg-content {
+    background: var(--user-bubble);
+    color: #f5f5f5;
+    border-bottom-right-radius: 4px;
+    border: 1px solid #2a2a2a;
+  }
+  .msg.ai .msg-content {
+    background: var(--ai-bubble);
+    color: var(--text-p);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .msg img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    align-self: flex-end;
+    object-fit: cover;
+    border: 1px solid #333;
+  }
+  .typing-indicator {
+    font-size: 13px;
+    color: var(--accent);
+    margin: 0 20px 6px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+  .input-area {
+    padding: 18px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    background: #050505;
+  }
+  .input-area input {
+    flex: 1;
+    background: #111;
+    border: 1.5px solid var(--border);
+    padding: 16px 26px;
+    border-radius: 32px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    white-space: pre-wrap;
+  }
+  .input-area input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-soft);
+  }
+  .btn-send {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+    color: black;
+    font-size: 18px;
+  }
+  .btn-send:hover {
+    transform: scale(1.08);
+  }
+  .settings-panel {
+    padding: 24px 28px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .config-group {
+    margin-bottom: 8px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #aaa;
+    margin-bottom: 5px;
+    user-select:none;
+  }
+  input, textarea {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: 'Urbanist';
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    min-height: 40px;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  .avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .avatar-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #222;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+  .file-label {
+    font-size: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid var(--accent);
+    transition: 0.2s;
+    user-select:none;
+  }
+  .file-label:hover {
+    background: var(--accent);
+    color: black;
+  }
+  input[type="file"] {
+    display: none;
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin: 8px 0;
+    user-select:none;
+  }
+  .toggle-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--danger);
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #2a2a2a;
+    transition: .3s;
+    border-radius: 34px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--danger);
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  .btn-save {
+    background: var(--accent);
+    color: black;
+    border: none;
+    padding: 15px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
+    transition: 0.2s;
+    user-select:none;
+  }
+  .btn-save:hover {
+    background: #e5ffa0;
+    transform: translateY(-2px);
+  }
+  hr {
+    border-color: #222;
+    margin: 8px 0 16px;
+  }
+  .profile-section {
+    background: #0d0d0d;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid #1f1f1f;
+  }
 
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: white;
-            margin: 0;
-            padding: 10px;
-            overflow-x: hidden;
-        }
-
-        h2 { text-align: center; color: var(--btn-purple); font-size: 20px; }
-
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        button, .upload-btn {
-            background-color: var(--btn-purple);
-            color: #000;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-            flex: 1;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        #play-master { background-color: var(--capcut-cyan); }
-        input[type="file"] { display: none; }
-
-        /* TIMELINE (ZAMAN ÇİZELGESİ) ALANI */
-        .workspace-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            background-color: var(--timeline-bg);
-            border-radius: 8px;
-            position: relative;
-            padding-bottom: 20px;
-            border: 1px solid #333;
-        }
-
-        .workspace {
-            position: relative;
-            width: 2000px; /* Geniş bir çalışma alanı (Saniye başı 20px) */
-            min-height: 200px;
-            padding-top: 30px; /* Saniye cetveli için boşluk */
-        }
-
-        /* Oynatma Çizgisi (Playhead) */
-        .playhead {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0px;
-            width: 2px;
-            background-color: white;
-            z-index: 100;
-            box-shadow: 0 0 5px rgba(255,255,255,0.8);
-        }
-
-        .playhead::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -4px;
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            border-radius: 50%;
-        }
-
-        /* Saniye Cetveli */
-        .time-ruler {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 25px;
-            border-bottom: 1px solid #555;
-            display: flex;
-            color: #888;
-            font-size: 10px;
-            pointer-events: none;
-        }
-
-        /* Şarkı Katmanları (Tracks) */
-        .track-lane {
-            position: relative;
-            height: 80px;
-            margin-bottom: 10px;
-            background-color: rgba(255,255,255,0.02);
-            border-bottom: 1px solid #333;
-        }
-
-        .audio-clip {
-            position: absolute;
-            top: 5px;
-            height: 70px;
-            background: linear-gradient(90deg, #005b66, var(--capcut-cyan));
-            border-radius: 5px;
-            display: flex;
-            align-items: flex-end;
-            padding: 5px;
-            box-sizing: border-box;
-            border: 1px solid #fff;
-            /* Sahte ses dalgası deseni */
-            background-image: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 2px,
-                rgba(0,0,0,0.3) 2px,
-                rgba(0,0,0,0.3) 4px
-            );
-        }
-
-        .clip-name {
-            font-size: 10px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-
-        /* Alt Kontroller */
-        .track-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .control-row {
-            background-color: var(--bg-panel);
-            padding: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-        }
-
-        .control-row input[type="number"] {
-            width: 50px;
-            background: #333;
-            color: white;
-            border: 1px solid var(--btn-purple);
-            border-radius: 3px;
-            padding: 3px;
-        }
-    </style>
+  /* Responsive */
+  @media (max-width: 768px) {
+    .slide-container {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+    }
+    .tab-navigation {
+      padding: 0 10px;
+    }
+    .tab-btn {
+      font-size: 13px;
+      padding: 12px 16px;
+    }
+    .chat-header h2 {
+      font-size: 16px;
+    }
+    .chat-header span {
+      font-size: 10px;
+    }
+    .chat-header img {
+      width: 36px;
+      height: 36px;
+    }
+    .chat-history {
+      padding: 16px 12px;
+      gap: 14px;
+    }
+    .msg-content {
+      font-size: 13px;
+      padding: 14px 18px;
+      max-width: 90%;
+    }
+    .msg img {
+      width: 28px;
+      height: 28px;
+    }
+    .input-area {
+      padding: 12px 14px;
+      gap: 8px;
+    }
+    .input-area input {
+      font-size: 14px;
+      padding: 12px 16px;
+      border-radius: 24px;
+    }
+    .btn-send {
+      width: 42px;
+      height: 42px;
+      font-size: 16px;
+    }
+    .settings-panel {
+      padding: 18px 20px;
+    }
+    input, textarea {
+      font-size: 13px;
+    }
+    label {
+      font-size: 11px;
+    }
+    .chat-panel {
+      height: 100%;
+    }
+    .panels {
+      flex-direction: column;
+    }
+    .panel {
+      height: auto;
+      flex: 1 1 auto;
+    }
+  }
+  @media (max-width: 400px) {
+    .tab-btn {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .chat-header h2 {
+      font-size: 14px;
+    }
+    .chat-history {
+      padding: 14px 10px;
+    }
+    .msg-content {
+      font-size: 12px;
+      padding: 12px 14px;
+    }
+    .input-area input {
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+    .btn-send {
+      width: 38px;
+      height: 38px;
+      font-size: 15px;
+    }
+  }
+</style>
 </head>
 <body>
-
-    <h2>Emloxa Mix Studio Pro</h2>
-
-    <div class="toolbar">
-        <label class="upload-btn">
-            + SES EKLE
-            <input type="file" id="file-upload" accept="audio/*">
-        </label>
-        <button id="play-master">BAŞLAT (TÜMÜ)</button>
+<div class="slide-container">
+  <div class="tab-navigation">
+    <button class="tab-btn active" data-tab="chat"><i class="fas fa-comment-dots"></i> Chat</button>
+    <button class="tab-btn" data-tab="character"><i class="fas fa-robot"></i> Character</button>
+    <button class="tab-btn" data-tab="profile"><i class="fas fa-id-card"></i> My Profile</button>
+  </div>
+  <div class="panels">
+    <!-- Chat Panel -->
+    <div id="chatPanel" class="panel active">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <img id="headerAiImg" src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000" alt="AI"/>
+          <div>
+            <h2 id="headerAiName">Nova</h2>
+            <span id="headerStatus">PHYSICAL REALITY ACTIVE</span>
+          </div>
+        </div>
+        <div class="chat-history" id="chatBox"></div>
+        <div class="typing-indicator" id="typing"><i class="fas fa-circle-notch fa-spin"></i> responding...</div>
+        <div class="input-area">
+          <input type="text" id="chatInput" placeholder="Say something or act (e.g., *takes your hand* Hey...)" autocomplete="off" />
+          <button class="btn-send" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
     </div>
 
-    <div class="workspace-wrapper">
-        <div class="workspace" id="workspace">
-            <div class="time-ruler" id="time-ruler"></div>
-            <div class="playhead" id="playhead"></div>
-            </div>
+    <!-- Character Panel -->
+    <div id="characterPanel" class="panel">
+      <div class="settings-panel">
+        <div class="section-title"><i class="fas fa-robot"></i> Character Identity</div>
+        <div class="config-group">
+          <label>Character Name</label>
+          <input type="text" id="aiName" value="Nova" placeholder="e.g., Nova" />
+        </div>
+        <div class="config-group">
+          <label>Greeting Message (How it starts)</label>
+          <input type="text" id="aiGreeting" value="*Sits on the wooden chair, looking into your eyes.* Didn't expect to see you here." />
+        </div>
+        <div class="config-group">
+          <label>Scenario / Personality / Setting</label>
+          <textarea id="aiPersona" rows="4">A dimly lit café. You are a real person sitting across from me. Mysterious, soft voice.</textarea>
+        </div>
+        <div class="avatar-row">
+          <img
+            id="aiImgPreview"
+            class="avatar-preview"
+            src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000"
+            alt="AI"
+          />
+          <label class="file-label" for="aiFile"><i class="fas fa-camera"></i> Upload photo</label>
+          <input type="file" id="aiFile" accept="image/*" />
+        </div>
+        <hr />
+        <div class="toggle-row">
+          <span class="toggle-label"><i class="fas fa-exclamation-triangle"></i> NSFW Mode</span>
+          <label class="switch">
+            <input type="checkbox" id="nsfwToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <button class="btn-save" id="saveCharBtn"><i class="fas fa-save"></i> Save Character</button>
+      </div>
     </div>
 
-    <div class="track-controls" id="controls-container"></div>
-
-    <script>
-        const pixelsPerSecond = 20; // Zaman çizelgesi ölçeği (1 saniye = 20 piksel)
-        const workspace = document.getElementById('workspace');
-        const ruler = document.getElementById('time-ruler');
-        const playhead = document.getElementById('playhead');
-        const controlsContainer = document.getElementById('controls-container');
-        const playMasterBtn = document.getElementById('play-master');
-
-        let tracks = [];
-        let isPlaying = false;
-        let globalTime = 0; // Saniye cinsinden
-        let animationFrame;
-        let startTime = 0;
-
-        // Cetveli Çiz (0'dan 100 saniyeye kadar basit bir cetvel)
-        for(let i=0; i<=100; i+=5) {
-            let mark = document.createElement('div');
-            mark.style.position = 'absolute';
-            mark.style.left = (i * pixelsPerSecond) + 'px';
-            mark.innerText = i + 's';
-            ruler.appendChild(mark);
-        }
-
-        // Dosya Yükleme
-        document.getElementById('file-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const url = URL.createObjectURL(file);
-            const audioObj = new Audio(url);
-            
-            // Sesin uzunluğunu öğrenmek için yüklenmesini bekliyoruz
-            audioObj.onloadedmetadata = () => {
-                addTrackToTimeline(file.name, audioObj, audioObj.duration);
-            };
-        });
-
-        function addTrackToTimeline(name, audioObj, duration) {
-            const trackId = Date.now();
-            
-            const trackData = {
-                id: trackId,
-                audio: audioObj,
-                duration: duration,
-                startOffset: 0 // Şarkının kaçıncı saniyede başlayacağı
-            };
-            tracks.push(trackData);
-
-            // 1. Timeline Üzerinde Görsel Katman (Lane & Clip) Oluştur
-            const laneDiv = document.createElement('div');
-            laneDiv.className = 'track-lane';
-            laneDiv.id = 'lane-' + trackId;
-
-            const clipDiv = document.createElement('div');
-            clipDiv.className = 'audio-clip';
-            clipDiv.id = 'clip-' + trackId;
-            clipDiv.style.width = (duration * pixelsPerSecond) + 'px';
-            clipDiv.style.left = '0px'; // Başlangıçta 0
-            clipDiv.innerHTML = `<span class="clip-name">${name}</span>`;
-
-            laneDiv.appendChild(clipDiv);
-            workspace.appendChild(laneDiv);
-
-            // 2. Alt Kısımda Kontrol Paneli Oluştur
-            const controlDiv = document.createElement('div');
-            controlDiv.className = 'control-row';
-            controlDiv.innerHTML = `
-                <div>
-                    <strong>${name.substring(0, 15)}...</strong>
-                </div>
-                <div>
-                    Başlama Saniyesi: 
-                    <input type="number" min="0" value="0" step="1" id="offset-${trackId}">
-                </div>
-            `;
-            controlsContainer.appendChild(controlDiv);
-
-            // Başlama Saniyesi Değiştiğinde Bloğu Sağa/Sola Kaydır
-            document.getElementById(`offset-${trackId}`).addEventListener('input', (e) => {
-                const newOffset = parseFloat(e.target.value) || 0;
-                trackData.startOffset = newOffset;
-                clipDiv.style.left = (newOffset * pixelsPerSecond) + 'px'; // Görseli kaydır
-            });
-        }
-
-        // Master Play / Pause Mantığı
-        playMasterBtn.addEventListener('click', () => {
-            if (tracks.length === 0) return alert("Önce şarkı yükleyin!");
-
-            if (isPlaying) {
-                // Durdur
-                cancelAnimationFrame(animationFrame);
-                tracks.forEach(t => { t.audio.pause(); t.audio.currentTime = 0; });
-                playMasterBtn.textContent = "BAŞLAT (TÜMÜ)";
-                playMasterBtn.style.backgroundColor = "var(--capcut-cyan)";
-                globalTime = 0;
-                playhead.style.left = '0px';
-                isPlaying = false;
-            } else {
-                // Oynat
-                startTime = Date.now();
-                playMasterBtn.textContent = "DURDUR";
-                playMasterBtn.style.backgroundColor = "#ff4d4d";
-                isPlaying = true;
-                updateTimeline();
-            }
-        });
-
-        // Çizgiyi İlerleten ve Şarkıları Zamanı Gelince Başlatan Döngü
-        function updateTimeline() {
-            if (!isPlaying) return;
-
-            // Ne kadar süre geçtiğini hesapla
-            globalTime = (Date.now() - startTime) / 1000; 
-
-            // Playhead (Dikey Çizgi) Konumunu Güncelle
-            playhead.style.left = (globalTime * pixelsPerSecond) + 'px';
-
-            // Hangi şarkıların çalması gerektiğini kontrol et
-            tracks.forEach(track => {
-                // Eğer global zaman, şarkının başlama zamanını (offset) geçtiyse ve şarkı henüz bitmediyse
-                if (globalTime >= track.startOffset && globalTime < (track.startOffset + track.duration)) {
-                    if (track.audio.paused) {
-                        // Şarkıyı doğru saniyeden başlat
-                        track.audio.currentTime = globalTime - track.startOffset;
-                        track.audio.play();
-                    }
-                } else {
-                    // Şarkı bitmişse veya henüz zamanı gelmemişse durdur
-                    if (!track.audio.paused) {
-                        track.audio.pause();
-                    }
-                }
-            });
-
-            // Ekranı otomatik kaydır (Playhead sağa gittikçe ekran da takip etsin)
-            const wrapper = document.querySelector('.workspace-wrapper');
-            if ((globalTime * pixelsPerSecond) > wrapper.scrollLeft + wrapper.clientWidth - 50) {
-                wrapper.scrollLeft = (globalTime * pixelsPerSecond) - wrapper.clientWidth + 100;
-            }
-
-            animationFrame = requestAnimationFrame(updateTimeline);
-        }
-    </script>
-</body>
-</html>
+    <!-- Profile Panel -->
+    <div id="profilePanel" class="panel">
+      <div class="settings-panel">
+        <div class="section-title"><i class="fas fa-user-circle"></i> Your Identity</div>
+        <div class="config-group">
+          <label>Your Name</label>
+          <input type="text" id="userName" placeholder="Your name" />
+        </div>
+        <div class="config-group">
+          <label>About You (Personality/Looks)</label>
+          <textarea id="userBio" rows="3" placeholder="Age, appearance, style..."></textarea>
+        </div>
+        <div class="avatar-row">
+          <img
+            id="userImgPreview"
+            class="avatar-preview"
+            src="https://ui-avatars.com/api/?name=You&background=333&color=fff"
+            alt="You"
+          />
+          <label class="file-label" for="userFile"><i class="fas fa-camera"></i> Upload photo</label>
+          <input type="file" id="userFile" accept="image/*" />
+        </div>
+        <hr />
+        <div class="config-group">
+          <label>Master API Key</label>
+          <input type="password" id="apiKey" placeholder="Enter your API key" />
+        </div>
+        <button class="btn-save" id="saveProfileBtn"><i class="fas fa-cloud-upload-alt"></i> Save Profile</button>
+      </div>
+    </div>
+  </div>
+</div>
