@@ -132,6 +132,9 @@
     border: 1px solid var(--accent);
     object-fit: cover;
   }
+  .header-info {
+    flex: 1;
+  }
   .chat-header h2 {
     font-size: 18px;
     font-weight: 700;
@@ -142,6 +145,26 @@
     color: var(--accent);
     font-weight: 600;
     letter-spacing: 0.3px;
+  }
+  /* YENİ EKLENEN TAKAS BUTONU STİLİ */
+  .btn-swap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 16px;
+  }
+  .btn-swap:hover {
+    background: var(--accent);
+    color: black;
+    transform: scale(1.05);
   }
   .chat-history {
     flex: 1;
@@ -433,6 +456,11 @@
       width: 36px;
       height: 36px;
     }
+    .btn-swap {
+      width: 36px;
+      height: 36px;
+      font-size: 14px;
+    }
     .chat-history {
       padding: 16px 12px 80px 12px !important;
       gap: 14px;
@@ -520,10 +548,11 @@
         <div class="chat-panel">
           <div class="chat-header">
             <img id="headerAiImg" src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000" alt="AI" />
-            <div>
+            <div class="header-info">
               <h2 id="headerAiName">Nova</h2>
               <span id="headerStatus">PHYSICAL REALITY ACTIVE</span>
             </div>
+            <button id="swapRolesBtn" class="btn-swap" title="Rolleri Takas Et"><i class="fas fa-exchange-alt"></i></button>
           </div>
           <div class="chat-history" id="chatBox"></div>
           <div class="typing-indicator" id="typing"><i class="fas fa-circle-notch fa-spin"></i> responding...</div>
@@ -614,6 +643,9 @@
 
     headerName: document.getElementById("headerAiName"),
     headerImg: document.getElementById("headerAiImg"),
+    
+    // Yeni eklenen buton elementi
+    swapBtn: document.getElementById("swapRolesBtn"),
 
     tabs: document.querySelectorAll(".tab-btn"),
     panels: {
@@ -756,6 +788,56 @@
       e.target.value = "";
     });
   }
+  
+  // YENİ TAKAS FONKSİYONU
+  function swapRoles() {
+    if (!confirm("Rolleri takas etmek mevcut sohbeti sıfırlayacaktır. Devam etmek istiyor musun?")) return;
+
+    // Geçici değişkenlerle verileri tut
+    const tempName = character.name;
+    const tempAvatar = character.avatar;
+    const tempPersona = character.persona;
+
+    // AI -> Sen
+    character.name = userProfile.name;
+    character.avatar = userProfile.avatar;
+    character.persona = userProfile.bio || "Bilinmeyen bir kişi.";
+    
+    // Sen -> AI
+    userProfile.name = tempName;
+    userProfile.avatar = tempAvatar;
+    userProfile.bio = tempPersona;
+
+    // Inputları Güncelle (Arayüze yansıt)
+    els.aiName.value = character.name;
+    els.aiPersona.value = character.persona;
+    els.aiPrev.src = character.avatar;
+
+    els.userName.value = userProfile.name;
+    els.userBio.value = userProfile.bio;
+    els.userPrev.src = userProfile.avatar;
+
+    // Kaydet
+    saveJSON("ex_character", character);
+    localStorage.setItem("ex_user_name", userProfile.name);
+    localStorage.setItem("ex_user_bio", userProfile.bio);
+    localStorage.setItem("ex_user_img", userProfile.avatar);
+
+    // Header Güncelle
+    els.headerName.textContent = character.name;
+    els.headerImg.src = character.avatar;
+
+    // Sohbeti Sıfırla ve Yeni Rolü Başlat
+    const newGreeting = `*Roller değişti.* Merhaba, ben artık ${character.name}.`;
+    character.greeting = newGreeting; // Gerekirse greeting inputunu da güncelleyebilirsin
+    els.aiGreeting.value = newGreeting;
+    
+    chatLog = [{ role: "ai", text: newGreeting }];
+    saveChatLog();
+    els.chatBox.innerHTML = "";
+    addMessage("ai", newGreeting);
+  }
+
   async function sendMessage() {
     const input = els.chatInput.value.trim();
     if (!input) return alert("Please enter a message.");
@@ -826,6 +908,7 @@ ${nsfwText}
       els.typing.style.display = "none";
     }
   }
+  
   els.tabs.forEach((btn) => {
     btn.addEventListener("click", () => {
       els.tabs.forEach((b) => b.classList.remove("active"));
@@ -835,6 +918,7 @@ ${nsfwText}
       els.panels[tabId].classList.add("active");
     });
   });
+  
   handleImage(els.aiFile, els.aiPrev, (b64) => {
     character.avatar = b64;
     saveJSON("ex_character", character);
@@ -844,9 +928,12 @@ ${nsfwText}
     userProfile.avatar = b64;
     localStorage.setItem("ex_user_img", b64);
   });
+  
   document.getElementById("saveCharBtn").addEventListener("click", saveCharacter);
   document.getElementById("saveProfileBtn").addEventListener("click", saveUserProfile);
   els.sendBtn.addEventListener("click", sendMessage);
+  els.swapBtn.addEventListener("click", swapRoles); // Takas butonuna click eventi bağlandı
+  
   els.chatInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
