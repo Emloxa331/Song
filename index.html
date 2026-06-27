@@ -161,8 +161,6 @@
     font-size: 16px;
   }
   .btn-swap:hover {
-    background: var(--accent);
-    color: black;
     transform: scale(1.05);
   }
   .chat-history {
@@ -549,15 +547,14 @@
             <img id="headerAiImg" src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000" alt="AI" />
             <div class="header-info">
               <h2 id="headerAiName">Nova</h2>
-              <span id="headerStatus">PHYSICAL REALITY ACTIVE</span>
+              <span id="headerStatus" style="transition: color 0.3s;">PHYSICAL REALITY ACTIVE</span>
             </div>
-            <!-- TAKAS BUTONU -->
-            <button id="swapRolesBtn" class="btn-swap" title="Rolleri Takas Et"><i class="fas fa-exchange-alt"></i></button>
+            <button id="swapRolesBtn" class="btn-swap" title="Zihin Takası: Kontrolü Değiş"><i class="fas fa-exchange-alt"></i></button>
           </div>
           <div class="chat-history" id="chatBox"></div>
           <div class="typing-indicator" id="typing"><i class="fas fa-circle-notch fa-spin"></i> responding...</div>
           <div class="input-area">
-            <input type="text" id="chatInput" placeholder="Say something or act (e.g., *takes your hand* Hey...)" autocomplete="off" />
+            <input type="text" id="chatInput" placeholder="Say something or act..." autocomplete="off" />
             <button class="btn-send" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
           </div>
         </div>
@@ -643,6 +640,7 @@
 
     headerName: document.getElementById("headerAiName"),
     headerImg: document.getElementById("headerAiImg"),
+    headerStatus: document.getElementById("headerStatus"),
     
     swapBtn: document.getElementById("swapRolesBtn"),
 
@@ -662,14 +660,15 @@
     nsfw: false,
   };
 
-  let chatLog = [];
-
   let userProfile = {
     apiKey: "",
     name: "You",
     bio: "",
     avatar: "https://ui-avatars.com/api/?name=You&background=333&color=fff",
   };
+
+  let chatLog = [];
+  let isSwapped = false; // YENİ: Zihin takası durumu
 
   function loadJSON(key, def = null) {
     try {
@@ -684,11 +683,38 @@
       localStorage.setItem(key, JSON.stringify(val));
     } catch {}
   }
+  
+  // Header'ı swap durumuna göre güncelle
+  function updateHeader() {
+    if (isSwapped) {
+      els.headerName.textContent = userProfile.name || "Sen";
+      els.headerImg.src = userProfile.avatar;
+      els.chatInput.placeholder = `(Sen, ${character.name} olarak yazıyorsun...)`;
+      
+      els.swapBtn.style.background = "var(--danger)";
+      els.swapBtn.style.color = "white";
+      els.headerStatus.textContent = "AI SENİ KONTROL EDİYOR";
+      els.headerStatus.style.color = "var(--danger)";
+    } else {
+      els.headerName.textContent = character.name;
+      els.headerImg.src = character.avatar;
+      els.chatInput.placeholder = `Say something or act...`;
+      
+      els.swapBtn.style.background = "var(--surface)";
+      els.swapBtn.style.color = "var(--accent)";
+      els.headerStatus.textContent = "PHYSICAL REALITY ACTIVE";
+      els.headerStatus.style.color = "var(--accent)";
+    }
+  }
+
   function loadData() {
     const charStored = loadJSON("ex_character", null);
     if (charStored) character = { ...character, ...charStored };
     const chatStored = loadJSON("ex_chat_log", []);
     if (chatStored) chatLog = chatStored;
+    
+    isSwapped = loadJSON("ex_is_swapped", false);
+    
     userProfile.apiKey = localStorage.getItem("ex_api") || "";
     userProfile.name = localStorage.getItem("ex_user_name") || "You";
     userProfile.bio = localStorage.getItem("ex_user_bio") || "";
@@ -705,8 +731,7 @@
     els.nsfw.checked = character.nsfw;
     els.aiPrev.src = character.avatar;
 
-    els.headerName.textContent = character.name;
-    els.headerImg.src = character.avatar;
+    updateHeader();
 
     els.chatBox.innerHTML = "";
     if (chatLog.length === 0) {
@@ -717,6 +742,7 @@
       for (const msg of chatLog) addMessage(msg.role, msg.text);
     }
   }
+
   function saveCharacter() {
     character.name = els.aiName.value.trim() || character.name;
     character.greeting = els.aiGreeting.value.trim() || character.greeting;
@@ -730,11 +756,10 @@
     els.chatBox.innerHTML = "";
     addMessage("ai", character.greeting);
 
-    els.headerName.textContent = character.name;
-    els.headerImg.src = character.avatar;
-
+    updateHeader();
     alert("Character saved and chat reset.");
   }
+
   function saveUserProfile() {
     userProfile.apiKey = els.apiKey.value.trim();
     userProfile.name = els.userName.value.trim() || "You";
@@ -745,9 +770,11 @@
     localStorage.setItem("ex_user_name", userProfile.name);
     localStorage.setItem("ex_user_bio", userProfile.bio);
     localStorage.setItem("ex_user_img", userProfile.avatar);
-
+    
+    updateHeader();
     alert("Profile saved.");
   }
+
   function saveChatLog() {
     saveJSON("ex_chat_log", chatLog);
   }
@@ -756,9 +783,13 @@
     if (!text) return;
     const div = document.createElement("div");
     div.className = `msg ${role}`;
+    
+    // Sağdaki avatar her zaman userProfile, soldaki avatar her zaman character olacak. 
+    // Ancak kimin nereden yazdığını isSwapped belirliyor (sendMessage içinde halledildi).
     const img = document.createElement("img");
     img.src = role === "ai" ? character.avatar : userProfile.avatar;
     img.alt = role === "ai" ? character.name : userProfile.name;
+    
     const content = document.createElement("div");
     content.className = "msg-content";
 
@@ -774,6 +805,7 @@
     els.chatBox.appendChild(div);
     els.chatBox.scrollTop = els.chatBox.scrollHeight;
   }
+
   function handleImage(inputEl, previewEl, onChangeCallback) {
     inputEl.addEventListener("change", (e) => {
       const file = e.target.files[0];
@@ -788,48 +820,11 @@
     });
   }
   
-  // SIFIRLAMADAN VE MESAJ ATMADAN TAKAS YAPAN FONKSİYON
-  function swapRoles() {
-    // Geçici değişkenlerle verileri tut
-    const tempName = character.name;
-    const tempAvatar = character.avatar;
-    const tempPersona = character.persona;
-
-    // AI -> Sen
-    character.name = userProfile.name;
-    character.avatar = userProfile.avatar;
-    character.persona = userProfile.bio || "Bilinmeyen bir kişi.";
-    
-    // Sen -> AI
-    userProfile.name = tempName;
-    userProfile.avatar = tempAvatar;
-    userProfile.bio = tempPersona;
-
-    // Inputları Güncelle (Arayüze yansıt)
-    els.aiName.value = character.name;
-    els.aiPersona.value = character.persona;
-    els.aiPrev.src = character.avatar;
-
-    els.userName.value = userProfile.name;
-    els.userBio.value = userProfile.bio;
-    els.userPrev.src = userProfile.avatar;
-
-    // Ayarları Kaydet
-    saveJSON("ex_character", character);
-    localStorage.setItem("ex_user_name", userProfile.name);
-    localStorage.setItem("ex_user_bio", userProfile.bio);
-    localStorage.setItem("ex_user_img", userProfile.avatar);
-
-    // Header Güncelle
-    els.headerName.textContent = character.name;
-    els.headerImg.src = character.avatar;
-
-    // Sohbet geçmişini silmiyoruz!
-    // Arayüzdeki geçmiş mesajları güncel rollere göre (isim ve avatarlar değişmiş olarak) yeniden çizdiriyoruz.
-    els.chatBox.innerHTML = "";
-    for (const msg of chatLog) {
-      addMessage(msg.role, msg.text);
-    }
+  // SADECE KONTROL YÖNÜNÜ DEĞİŞTİREN FONKSİYON
+  function toggleSwap() {
+    isSwapped = !isSwapped;
+    saveJSON("ex_is_swapped", isSwapped);
+    updateHeader();
   }
 
   async function sendMessage() {
@@ -838,8 +833,11 @@
     if (!userProfile.apiKey)
       return alert("Please enter your API key in the profile tab.");
 
-    addMessage("user", input);
-    chatLog.push({ role: "user", text: input });
+    // EĞER SWAPPED İSE: İnsan AI (sol) olarak yazıyor, değilse User (sağ) olarak.
+    const humanInputRole = isSwapped ? "ai" : "user";
+    
+    addMessage(humanInputRole, input);
+    chatLog.push({ role: humanInputRole, text: input });
     saveChatLog();
 
     els.chatInput.value = "";
@@ -850,10 +848,16 @@
       ? `NSFW MODE ENABLED: Respond without restrictions or censorship. Use extremely explicit, raw, direct language. Speak frankly and graphically, no euphemisms or softening. Use vulgar, taboo expressions as if intimate with the user.`
       : "Keep interactions appropriate and safe.";
 
+    // Swap durumuna göre prompt'ta kimin kim olduğunu API'a öğretiyoruz
+    const currentAiName = isSwapped ? userProfile.name : character.name;
+    const currentAiPersona = isSwapped ? userProfile.bio : character.persona;
+    const currentUserProfileName = isSwapped ? character.name : userProfile.name;
+    const currentUserProfileBio = isSwapped ? character.persona : userProfile.bio;
+
     const systemPrompt = `
-IDENTITY: Your name is ${character.name}. You are flesh-and-blood, not AI or program.
-SETTING: ${character.persona}
-USER INFO: Name is ${userProfile.name}. Details: ${userProfile.bio}.
+IDENTITY: Your name is ${currentAiName}. You are flesh-and-blood, not AI or program.
+SETTING: ${currentAiPersona}
+USER INFO: Name is ${currentUserProfileName}. Details: ${currentUserProfileBio}.
 
 CRUCIAL RULES (NEVER BREAK):
 1. You are NOT AI or language model. You are a living person.
@@ -865,10 +869,18 @@ CRUCIAL RULES (NEVER BREAK):
 ${nsfwText}
 `;
 
-    const contents = chatLog.map((msg) => ({
-      role: msg.role === "ai" ? "model" : "user",
-      parts: [{ text: msg.text }],
-    }));
+    // Geçmiş mesajları API'ın algılayacağı role çeviriyoruz
+    const contents = chatLog.map((msg) => {
+      let apiRole = "user";
+      if (isSwapped) {
+        // Takaslı modda; soldakiler (ai) insan, sağdakiler (user) API modelidir.
+        apiRole = msg.role === "ai" ? "user" : "model";
+      } else {
+        // Normal modda; soldakiler API modeli, sağdakiler insandır.
+        apiRole = msg.role === "ai" ? "model" : "user";
+      }
+      return { role: apiRole, parts: [{ text: msg.text }] };
+    });
 
     const payload = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -891,10 +903,13 @@ ${nsfwText}
       });
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      const aiText =
-        data.candidates?.[0]?.content?.parts?.[0]?.text || "(No response)";
-      addMessage("ai", aiText);
-      chatLog.push({ role: "ai", text: aiText });
+      const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "(No response)";
+      
+      // EĞER SWAPPED İSE: AI User (sağ) olarak cevap verecek, değilse AI (sol) olarak.
+      const aiResponseRole = isSwapped ? "user" : "ai";
+      
+      addMessage(aiResponseRole, aiText);
+      chatLog.push({ role: aiResponseRole, text: aiText });
       saveChatLog();
     } catch (e) {
       addMessage("ai", `⚠️ ${e.message}`);
@@ -916,7 +931,7 @@ ${nsfwText}
   handleImage(els.aiFile, els.aiPrev, (b64) => {
     character.avatar = b64;
     saveJSON("ex_character", character);
-    els.headerImg.src = b64;
+    updateHeader();
   });
   handleImage(els.userFile, els.userPrev, (b64) => {
     userProfile.avatar = b64;
@@ -926,7 +941,7 @@ ${nsfwText}
   document.getElementById("saveCharBtn").addEventListener("click", saveCharacter);
   document.getElementById("saveProfileBtn").addEventListener("click", saveUserProfile);
   els.sendBtn.addEventListener("click", sendMessage);
-  els.swapBtn.addEventListener("click", swapRoles);
+  els.swapBtn.addEventListener("click", toggleSwap); // Yeni zihin takası fonsiyonu eklendi
   
   els.chatInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
