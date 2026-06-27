@@ -146,7 +146,6 @@
     font-weight: 600;
     letter-spacing: 0.3px;
   }
-  /* YENİ EKLENEN TAKAS BUTONU STİLİ */
   .btn-swap {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -552,6 +551,7 @@
               <h2 id="headerAiName">Nova</h2>
               <span id="headerStatus">PHYSICAL REALITY ACTIVE</span>
             </div>
+            <!-- TAKAS BUTONU -->
             <button id="swapRolesBtn" class="btn-swap" title="Rolleri Takas Et"><i class="fas fa-exchange-alt"></i></button>
           </div>
           <div class="chat-history" id="chatBox"></div>
@@ -644,7 +644,6 @@
     headerName: document.getElementById("headerAiName"),
     headerImg: document.getElementById("headerAiImg"),
     
-    // Yeni eklenen buton elementi
     swapBtn: document.getElementById("swapRolesBtn"),
 
     tabs: document.querySelectorAll(".tab-btn"),
@@ -789,10 +788,8 @@
     });
   }
   
-  // YENİ TAKAS FONKSİYONU
+  // SIFIRLAMADAN VE MESAJ ATMADAN TAKAS YAPAN FONKSİYON
   function swapRoles() {
-    if (!confirm("Rolleri takas etmek mevcut sohbeti sıfırlayacaktır. Devam etmek istiyor musun?")) return;
-
     // Geçici değişkenlerle verileri tut
     const tempName = character.name;
     const tempAvatar = character.avatar;
@@ -817,7 +814,7 @@
     els.userBio.value = userProfile.bio;
     els.userPrev.src = userProfile.avatar;
 
-    // Kaydet
+    // Ayarları Kaydet
     saveJSON("ex_character", character);
     localStorage.setItem("ex_user_name", userProfile.name);
     localStorage.setItem("ex_user_bio", userProfile.bio);
@@ -827,15 +824,12 @@
     els.headerName.textContent = character.name;
     els.headerImg.src = character.avatar;
 
-    // Sohbeti Sıfırla ve Yeni Rolü Başlat
-    const newGreeting = `*Roller değişti.* Merhaba, ben artık ${character.name}.`;
-    character.greeting = newGreeting; // Gerekirse greeting inputunu da güncelleyebilirsin
-    els.aiGreeting.value = newGreeting;
-    
-    chatLog = [{ role: "ai", text: newGreeting }];
-    saveChatLog();
+    // Sohbet geçmişini silmiyoruz!
+    // Arayüzdeki geçmiş mesajları güncel rollere göre (isim ve avatarlar değişmiş olarak) yeniden çizdiriyoruz.
     els.chatBox.innerHTML = "";
-    addMessage("ai", newGreeting);
+    for (const msg of chatLog) {
+      addMessage(msg.role, msg.text);
+    }
   }
 
   async function sendMessage() {
@@ -932,7 +926,7 @@ ${nsfwText}
   document.getElementById("saveCharBtn").addEventListener("click", saveCharacter);
   document.getElementById("saveProfileBtn").addEventListener("click", saveUserProfile);
   els.sendBtn.addEventListener("click", sendMessage);
-  els.swapBtn.addEventListener("click", swapRoles); // Takas butonuna click eventi bağlandı
+  els.swapBtn.addEventListener("click", swapRoles);
   
   els.chatInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
