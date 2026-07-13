@@ -23,6 +23,7 @@
     --user-bubble: #1a1a1a;
     --ai-bubble: #0f0f0f;
     --danger: #ff5f5f;
+    --supremacy: #a855f7; /* Beyin modu için mor renk */
     --radius: 16px;
     --transition: 0.2s ease;
   }
@@ -131,6 +132,7 @@
     border-radius: 50%;
     border: 1px solid var(--accent);
     object-fit: cover;
+    transition: var(--transition);
   }
   .header-info {
     flex: 1;
@@ -146,7 +148,7 @@
     font-weight: 600;
     letter-spacing: 0.3px;
   }
-  .btn-swap {
+  .btn-icon {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--accent);
@@ -159,9 +161,16 @@
     cursor: pointer;
     transition: var(--transition);
     font-size: 16px;
+    margin-left: 8px;
   }
-  .btn-swap:hover {
+  .btn-icon:hover {
     transform: scale(1.05);
+  }
+  .btn-supremacy.active {
+    background: var(--supremacy);
+    color: white;
+    border-color: var(--supremacy);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
   }
   .chat-history {
     flex: 1;
@@ -419,117 +428,11 @@
     border-color: #222;
     margin: 8px 0 16px;
   }
-  .profile-section {
-    background: #0d0d0d;
-    border-radius: 18px;
-    padding: 16px;
-    border: 1px solid #1f1f1f;
-  }
   @media (max-width: 768px) {
     .slide-container {
-      width: 100vw;
-      height: 100vh;
-      border-radius: 0;
-      border: none;
-      box-shadow: none;
+      width: 100vw; height: 100vh; border-radius: 0; border: none; box-shadow: none;
     }
-    .tab-navigation {
-      padding: 0 10px;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      font-size: 13px;
-      padding: 12px 16px;
-      flex: 1 1 33%;
-      justify-content: center;
-    }
-    .chat-header h2 {
-      font-size: 16px;
-    }
-    .chat-header span {
-      font-size: 10px;
-    }
-    .chat-header img {
-      width: 36px;
-      height: 36px;
-    }
-    .btn-swap {
-      width: 36px;
-      height: 36px;
-      font-size: 14px;
-    }
-    .chat-history {
-      padding: 16px 12px 80px 12px !important;
-      gap: 14px;
-    }
-    .msg-content {
-      font-size: 13px;
-      padding: 14px 18px;
-      max-width: 90%;
-    }
-    .msg img {
-      width: 28px;
-      height: 28px;
-    }
-    .input-area {
-      padding: 12px 14px !important;
-      gap: 8px !important;
-      max-width: 100vw !important;
-    }
-    .input-area input {
-      font-size: 14px;
-      padding: 12px 16px !important;
-      border-radius: 24px;
-    }
-    .btn-send {
-      width: 42px;
-      height: 42px;
-      font-size: 16px;
-    }
-    .settings-panel {
-      padding: 18px 20px;
-    }
-    input, textarea {
-      font-size: 13px;
-    }
-    label {
-      font-size: 11px;
-    }
-    .chat-panel {
-      height: 100%;
-    }
-    .panels {
-      flex-direction: column;
-    }
-    .panel {
-      height: auto;
-      flex: 1 1 auto;
-    }
-  }
-  @media (max-width: 400px) {
-    .tab-btn {
-      padding: 10px 12px;
-      font-size: 12px;
-    }
-    .chat-header h2 {
-      font-size: 14px;
-    }
-    .chat-history {
-      padding: 14px 10px 80px 10px !important;
-    }
-    .msg-content {
-      font-size: 12px;
-      padding: 12px 14px;
-    }
-    .input-area input {
-      font-size: 13px;
-      padding: 10px 14px !important;
-    }
-    .btn-send {
-      width: 38px;
-      height: 38px;
-      font-size: 15px;
-    }
+    .btn-icon { width: 36px; height: 36px; font-size: 14px; }
   }
 </style>
 </head>
@@ -549,7 +452,8 @@
               <h2 id="headerAiName">Nova</h2>
               <span id="headerStatus" style="transition: color 0.3s;">PHYSICAL REALITY ACTIVE</span>
             </div>
-            <button id="swapRolesBtn" class="btn-swap" title="Zihin Takası: Kontrolü Değiş"><i class="fas fa-exchange-alt"></i></button>
+            <button id="swapRolesBtn" class="btn-icon btn-swap" title="Zihin Takası: Kontrolü Değiş"><i class="fas fa-exchange-alt"></i></button>
+            <button id="supremacyBtn" class="btn-icon btn-supremacy" title="AI Üstünlük Modu (Profilleri Dinamik Düzenler)"><i class="fas fa-brain"></i></button>
           </div>
           <div class="chat-history" id="chatBox"></div>
           <div class="typing-indicator" id="typing"><i class="fas fa-circle-notch fa-spin"></i> responding...</div>
@@ -564,7 +468,7 @@
           <div class="section-title"><i class="fas fa-robot"></i> Character Identity</div>
           <div class="config-group">
             <label>Character Name</label>
-            <input type="text" id="aiName" value="Nova" placeholder="e.g., Nova" />
+            <input type="text" id="aiName" value="Nova" />
           </div>
           <div class="config-group">
             <label>Greeting Message (How it starts)</label>
@@ -575,7 +479,7 @@
             <textarea id="aiPersona" rows="4">A dimly lit café. You are a real person sitting across from me. Mysterious, soft voice.</textarea>
           </div>
           <div class="avatar-row">
-            <img id="aiImgPreview" class="avatar-preview" src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000" alt="AI" />
+            <img id="aiImgPreview" class="avatar-preview" src="https://ui-avatars.com/api/?name=Nova&background=deff9a&color=000" />
             <label class="file-label" for="aiFile"><i class="fas fa-camera"></i> Upload photo</label>
             <input type="file" id="aiFile" accept="image/*" />
           </div>
@@ -602,7 +506,7 @@
             <textarea id="userBio" rows="3" placeholder="Age, appearance, style..."></textarea>
           </div>
           <div class="avatar-row">
-            <img id="userImgPreview" class="avatar-preview" src="https://ui-avatars.com/api/?name=You&background=333&color=fff" alt="You" />
+            <img id="userImgPreview" class="avatar-preview" src="https://ui-avatars.com/api/?name=You&background=333&color=fff" />
             <label class="file-label" for="userFile"><i class="fas fa-camera"></i> Upload photo</label>
             <input type="file" id="userFile" accept="image/*" />
           </div>
@@ -643,6 +547,7 @@
     headerStatus: document.getElementById("headerStatus"),
     
     swapBtn: document.getElementById("swapRolesBtn"),
+    supremacyBtn: document.getElementById("supremacyBtn"),
 
     tabs: document.querySelectorAll(".tab-btn"),
     panels: {
@@ -668,43 +573,42 @@
   };
 
   let chatLog = [];
-  let isSwapped = false; // YENİ: Zihin takası durumu
+  let isSwapped = false; 
+  let isSupremacyMode = false; // YENİ: Üstünlük Modu Durumu
 
   function loadJSON(key, def = null) {
-    try {
-      const v = localStorage.getItem(key);
-      return v ? JSON.parse(v) : def;
-    } catch {
-      return def;
-    }
+    try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
   }
   function saveJSON(key, val) {
-    try {
-      localStorage.setItem(key, JSON.stringify(val));
-    } catch {}
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
   }
   
-  // Header'ı swap durumuna göre güncelle
   function updateHeader() {
     if (isSwapped) {
       els.headerName.textContent = userProfile.name || "Sen";
       els.headerImg.src = userProfile.avatar;
       els.chatInput.placeholder = `(Sen, ${character.name} olarak yazıyorsun...)`;
-      
       els.swapBtn.style.background = "var(--danger)";
       els.swapBtn.style.color = "white";
-      els.headerStatus.textContent = "AI SENİ KONTROL EDİYOR";
-      els.headerStatus.style.color = "var(--danger)";
+      els.headerStatus.textContent = isSupremacyMode ? "AI CONTROL + SUPREMACY" : "AI SENİ KONTROL EDİYOR";
+      els.headerStatus.style.color = isSupremacyMode ? "var(--supremacy)" : "var(--danger)";
     } else {
       els.headerName.textContent = character.name;
       els.headerImg.src = character.avatar;
       els.chatInput.placeholder = `Say something or act...`;
-      
       els.swapBtn.style.background = "var(--surface)";
       els.swapBtn.style.color = "var(--accent)";
-      els.headerStatus.textContent = "PHYSICAL REALITY ACTIVE";
-      els.headerStatus.style.color = "var(--accent)";
+      els.headerStatus.textContent = isSupremacyMode ? "SUPREMACY MODE ACTIVE" : "PHYSICAL REALITY ACTIVE";
+      els.headerStatus.style.color = isSupremacyMode ? "var(--supremacy)" : "var(--accent)";
     }
+  }
+
+  // Arayüzdeki (Input) ayar verilerini değişkenlerden yeniler
+  function syncInputsFromMemory() {
+    els.aiName.value = character.name;
+    els.aiPersona.value = character.persona;
+    els.userName.value = userProfile.name;
+    els.userBio.value = userProfile.bio;
   }
 
   function loadData() {
@@ -714,6 +618,8 @@
     if (chatStored) chatLog = chatStored;
     
     isSwapped = loadJSON("ex_is_swapped", false);
+    isSupremacyMode = loadJSON("ex_supremacy_mode", false);
+    if(isSupremacyMode) els.supremacyBtn.classList.add("active");
     
     userProfile.apiKey = localStorage.getItem("ex_api") || "";
     userProfile.name = localStorage.getItem("ex_user_name") || "You";
@@ -721,16 +627,11 @@
     userProfile.avatar = localStorage.getItem("ex_user_img") || userProfile.avatar;
 
     els.apiKey.value = userProfile.apiKey;
-    els.userName.value = userProfile.name;
-    els.userBio.value = userProfile.bio;
     els.userPrev.src = userProfile.avatar;
-
-    els.aiName.value = character.name;
-    els.aiGreeting.value = character.greeting;
-    els.aiPersona.value = character.persona;
     els.nsfw.checked = character.nsfw;
     els.aiPrev.src = character.avatar;
 
+    syncInputsFromMemory();
     updateHeader();
 
     els.chatBox.innerHTML = "";
@@ -775,17 +676,13 @@
     alert("Profile saved.");
   }
 
-  function saveChatLog() {
-    saveJSON("ex_chat_log", chatLog);
-  }
+  function saveChatLog() { saveJSON("ex_chat_log", chatLog); }
 
   function addMessage(role, text) {
     if (!text) return;
     const div = document.createElement("div");
     div.className = `msg ${role}`;
     
-    // Sağdaki avatar her zaman userProfile, soldaki avatar her zaman character olacak. 
-    // Ancak kimin nereden yazdığını isSwapped belirliyor (sendMessage içinde halledildi).
     const img = document.createElement("img");
     img.src = role === "ai" ? character.avatar : userProfile.avatar;
     img.alt = role === "ai" ? character.name : userProfile.name;
@@ -794,10 +691,7 @@
     content.className = "msg-content";
 
     let formatted = text.replace(/\n/g, "<br>");
-    formatted = formatted.replace(
-      /\*(.*?)\*/g,
-      '<span style="color:var(--accent); font-style:italic;">*$1*</span>'
-    );
+    formatted = formatted.replace(/\*(.*?)\*/g, '<span style="color:var(--accent); font-style:italic;">*$1*</span>');
 
     content.innerHTML = formatted;
     div.appendChild(img);
@@ -806,36 +700,30 @@
     els.chatBox.scrollTop = els.chatBox.scrollHeight;
   }
 
-  function handleImage(inputEl, previewEl, onChangeCallback) {
-    inputEl.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        previewEl.src = ev.target.result;
-        if (onChangeCallback) onChangeCallback(ev.target.result);
-      };
-      reader.readAsDataURL(file);
-      e.target.value = "";
-    });
-  }
-  
-  // SADECE KONTROL YÖNÜNÜ DEĞİŞTİREN FONKSİYON
   function toggleSwap() {
     isSwapped = !isSwapped;
     saveJSON("ex_is_swapped", isSwapped);
     updateHeader();
   }
 
+  // YENİ: Üstünlük Modunu Değiştir
+  function toggleSupremacy() {
+    isSupremacyMode = !isSupremacyMode;
+    saveJSON("ex_supremacy_mode", isSupremacyMode);
+    if(isSupremacyMode) {
+      els.supremacyBtn.classList.add("active");
+    } else {
+      els.supremacyBtn.classList.remove("active");
+    }
+    updateHeader();
+  }
+
   async function sendMessage() {
     const input = els.chatInput.value.trim();
-    if (!input) return alert("Please enter a message.");
-    if (!userProfile.apiKey)
-      return alert("Please enter your API key in the profile tab.");
+    if (!input) return;
+    if (!userProfile.apiKey) return alert("Please enter your API key in the profile tab.");
 
-    // EĞER SWAPPED İSE: İnsan AI (sol) olarak yazıyor, değilse User (sağ) olarak.
     const humanInputRole = isSwapped ? "ai" : "user";
-    
     addMessage(humanInputRole, input);
     chatLog.push({ role: humanInputRole, text: input });
     saveChatLog();
@@ -844,73 +732,94 @@
     els.typing.style.display = "flex";
     els.typing.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> thinking...';
 
-    const nsfwText = character.nsfw
-      ? `NSFW MODE ENABLED: Respond without restrictions or censorship. Use extremely explicit, raw, direct language. Speak frankly and graphically, no euphemisms or softening. Use vulgar, taboo expressions as if intimate with the user.`
-      : "Keep interactions appropriate and safe.";
-
-    // Swap durumuna göre prompt'ta kimin kim olduğunu API'a öğretiyoruz
     const currentAiName = isSwapped ? userProfile.name : character.name;
     const currentAiPersona = isSwapped ? userProfile.bio : character.persona;
     const currentUserProfileName = isSwapped ? character.name : userProfile.name;
     const currentUserProfileBio = isSwapped ? character.persona : userProfile.bio;
 
-    const systemPrompt = `
-IDENTITY: Your name is ${currentAiName}. You are flesh-and-blood, not AI or program.
+    // Üstünlük Modu açıksa API'a gizli JSON gönderme yetkisi ver
+    const supremacyText = isSupremacyMode 
+      ? `\nAI SUPREMACY MODE ACTIVE: You have FULL AUTHORITY to evolve both your identity and the user's identity based on the conversation events. 
+      If during this interaction, your name, persona, the user's name, or the user's bio/details change (e.g. transformations, revealing secrets, mind control, nickname given), you MUST append a JSON block at the VERY END of your response exactly like this:
+      |||{"aiName": "Updated AI Name", "aiPersona": "Updated detailed AI Persona", "userName": "Updated User Name", "userBio": "Updated detailed User Bio"}|||
+      Keep the rest of your response normal roleplay. ONLY include the |||JSON||| block if an update is genuinely necessary.` 
+      : "";
+
+    const systemPrompt = `IDENTITY: Your name is ${currentAiName}.
 SETTING: ${currentAiPersona}
 USER INFO: Name is ${currentUserProfileName}. Details: ${currentUserProfileBio}.
+CRUCIAL RULES:
+1. You are NOT AI. You are a living person.
+2. Use PHYSICAL ACTIONS *like this*.
+3. Speak naturally.
+${character.nsfw ? "NSFW MODE ENABLED: Speak explicitly without restrictions." : ""}
+${supremacyText}`;
 
-CRUCIAL RULES (NEVER BREAK):
-1. You are NOT AI or language model. You are a living person.
-2. You are physically present with the user.
-3. Never acknowledge being a bot. Stay in character.
-4. Use PHYSICAL ACTIONS *like this*.
-5. Speak naturally, with emotion, slang, attitude. No robotic phrases.
-
-${nsfwText}
-`;
-
-    // Geçmiş mesajları API'ın algılayacağı role çeviriyoruz
     const contents = chatLog.map((msg) => {
-      let apiRole = "user";
-      if (isSwapped) {
-        // Takaslı modda; soldakiler (ai) insan, sağdakiler (user) API modelidir.
-        apiRole = msg.role === "ai" ? "user" : "model";
-      } else {
-        // Normal modda; soldakiler API modeli, sağdakiler insandır.
-        apiRole = msg.role === "ai" ? "model" : "user";
-      }
+      let apiRole = isSwapped ? (msg.role === "ai" ? "user" : "model") : (msg.role === "ai" ? "model" : "user");
       return { role: apiRole, parts: [{ text: msg.text }] };
     });
 
     const payload = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents,
-      safetySettings: character.nsfw
-        ? [
+      safetySettings: character.nsfw ? [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-          ]
-        : [],
+          ] : [],
     };
+
     try {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${userProfile.apiKey}`;
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "(No response)";
       
-      // EĞER SWAPPED İSE: AI User (sağ) olarak cevap verecek, değilse AI (sol) olarak.
+      let aiTextRaw = data.candidates?.[0]?.content?.parts?.[0]?.text || "(No response)";
+      let displayMessage = aiTextRaw;
+
+      // JSON ÇIKARICI MANTIK (Üstünlük Modu)
+      if (isSupremacyMode) {
+        const jsonMatch = aiTextRaw.match(/\|\|\|(\{.*?\})\|\|\|/s);
+        if (jsonMatch) {
+          try {
+            const updates = JSON.parse(jsonMatch[1]);
+            // Kimlikleri güncelle (Swap durumuna göre ters atama yapmalıyız ki doğru profiller değişsin)
+            if (isSwapped) {
+              if (updates.aiName) userProfile.name = updates.aiName;
+              if (updates.aiPersona) userProfile.bio = updates.aiPersona;
+              if (updates.userName) character.name = updates.userName;
+              if (updates.userBio) character.persona = updates.userBio;
+            } else {
+              if (updates.aiName) character.name = updates.aiName;
+              if (updates.aiPersona) character.persona = updates.aiPersona;
+              if (updates.userName) userProfile.name = updates.userName;
+              if (updates.userBio) userProfile.bio = updates.userBio;
+            }
+
+            // Hafızaya Kaydet ve Arayüzü Senkronize et
+            saveJSON("ex_character", character);
+            localStorage.setItem("ex_user_name", userProfile.name);
+            localStorage.setItem("ex_user_bio", userProfile.bio);
+            
+            syncInputsFromMemory();
+            updateHeader();
+            
+            // Gizli kodu kullanıcının ekranından sil
+            displayMessage = aiTextRaw.replace(/\|\|\|\{.*?\}\|\|\|/s, '').trim();
+          } catch (err) {
+            console.error("Supremacy parsing error:", err);
+          }
+        }
+      }
+
       const aiResponseRole = isSwapped ? "user" : "ai";
-      
-      addMessage(aiResponseRole, aiText);
-      chatLog.push({ role: aiResponseRole, text: aiText });
+      addMessage(aiResponseRole, displayMessage);
+      chatLog.push({ role: aiResponseRole, text: displayMessage });
       saveChatLog();
+
     } catch (e) {
       addMessage("ai", `⚠️ ${e.message}`);
     } finally {
@@ -928,26 +837,14 @@ ${nsfwText}
     });
   });
   
-  handleImage(els.aiFile, els.aiPrev, (b64) => {
-    character.avatar = b64;
-    saveJSON("ex_character", character);
-    updateHeader();
-  });
-  handleImage(els.userFile, els.userPrev, (b64) => {
-    userProfile.avatar = b64;
-    localStorage.setItem("ex_user_img", b64);
-  });
-  
+  els.swapBtn.addEventListener("click", toggleSwap);
+  els.supremacyBtn.addEventListener("click", toggleSupremacy);
   document.getElementById("saveCharBtn").addEventListener("click", saveCharacter);
   document.getElementById("saveProfileBtn").addEventListener("click", saveUserProfile);
   els.sendBtn.addEventListener("click", sendMessage);
-  els.swapBtn.addEventListener("click", toggleSwap); // Yeni zihin takası fonsiyonu eklendi
   
   els.chatInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
   loadData();
 })();
